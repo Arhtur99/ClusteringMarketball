@@ -7,12 +7,12 @@ from sklearn.cluster import KMeans
 from sklearn.model_selection import GridSearchCV
 import numpy as np
 import matplotlib.pyplot as plt
-import random
 
 import functions
 
-random.seed(10)
 
+# Set the random seed for consistent results
+np.random.seed(42)
 
 numerics = ['int16', 'int32', 'int64', 'float16', 'float32', 'float64']
 
