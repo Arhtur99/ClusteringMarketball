@@ -7,19 +7,17 @@ from sklearn.cluster import KMeans
 from sklearn.model_selection import GridSearchCV
 import numpy as np
 import matplotlib.pyplot as plt
+from sklearn.linear_model import LinearRegression
+
 
 import functions
-
 
 # Set the random seed for consistent results
 np.random.seed(42)
 
 numerics = ['int16', 'int32', 'int64', 'float16', 'float32', 'float64']
-
-
 player_data = pd.DataFrame(pd.read_csv("csv_marketball_players.csv"))
 player_data.dropna(inplace=True, axis=0)
-
 
 
 drop_cols = ['NUMBER', 'ROLE', 'MV (EUR)', 'PLAYER']
@@ -84,3 +82,37 @@ outliers = functions.find_cluster_outliers(df)
 # Print the outliers for each cluster
 for cluster, outlier_values in outliers.items():
     print(f"Cluster {cluster} outliers: {outlier_values}")
+
+
+# Linear regression for each cluster
+
+for cluster in np.unique(clusters):
+        # Select values for the current cluster
+
+        cluster_values = player_w_clusters[player_w_clusters['Cluster'] == cluster]
+        print(cluster_values)
+        print("-"*10)
+        cluster_values = cluster_values.drop(['NUMBER', 'ROLE', 'MV (EUR)', 'PLAYER', 'Cluster'], axis=1)
+        # Perform linear regression
+        X = cluster_values.drop(['MV (EUR).1'], axis=1)
+        X_numerical_columns = X.select_dtypes(include=['float64', 'int64']).columns
+        #X = X.select_dtypes(include=np.number)
+        scaler = StandardScaler()
+        X_scaled = pd.DataFrame(scaler.fit_transform(X[X_numerical_columns]), columns=X_numerical_columns)
+
+        y = cluster_values['MV (EUR).1']
+        regression_model = LinearRegression()
+        regression_model.fit(X_scaled, y)
+
+        # Calculate residuals
+        residuals = y - regression_model.predict(X_scaled)
+
+        y_pred = regression_model.predict(X_scaled)
+
+        # create basic scatterplot
+        plt.plot(y_pred, y, 'o')
+        # obtain m (slope) and b(intercept) of linear regression line
+        m, b = np.polyfit(y_pred, y, 1)
+        # add linear regression line to scatterplot
+        plt.plot(y_pred, m * y_pred + b)
+        plt.show()
